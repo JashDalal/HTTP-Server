@@ -1,0 +1,10 @@
+ Updated to-do after minimum requirement list
+ 
+ Make config file, log file
+ Config file-Document Root, Log File Name, Max Simultaneous Connections, Admin/Guest
+ Log file - error.log, should not throw errors on the terminal(all types of errors like keyboard interrupt, thread errors, program crashes, file path in put contains a directory which does not exist etc.) It should save them in error.log
+ Non-Persistent Connections
+ File Path resolving for spaces- unquote()
+ Threading - Parallel connections with separate program to test
+ Start and stop the server
+ Close connection after every request(non-persistent connection)

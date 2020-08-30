@@ -1,0 +1,106 @@
+Things I learnt:
+->In an HTTP request, the first line is called request line. It contains request-method-name request-URI HTTP-version.
+	Eg. GET /test.html HTTP/1.1
+		HEAD /query.html HTTP/1.0
+		POST /index.html HTTP/1.1
+
+->The request headers that come after request line are optional.
+
+->The first line of the response header is called status line. It contains HTTP-version status-code reason-phrase.
+	Eg. HTTP/1.1 200 OK
+		HTTP/1.0 404 Not Found
+		HTTP/1.1 403 Forbidden
+->HEAD method: A client can use the HEAD request to get the header that a GET request would have obtained. Since the header contains the last-modified date of the data, this can be used to check against the local cache copy.
+
+->OPTIONS: Ask the server to return the list of request methods it supports.
+
+->ASK if the uri path is supposed to start from actual root or from /var/www/html.
+
+->By default for HTTP/1.0 the server closes the connection once the response has been delivered. 
+
+->HTTP/1.1 server supports so-called virtual hosts. That is, the same physical server could house several virtual hosts, with different hostnames (e.g., www.nowhere123.com and www.test909.com) and their own dedicated document root directories. Hence, in an HTTP/1.1 GET request, it is mandatory to include a request header called "Host", to select one of the virtual hosts.
+
+->By default HTTP/1.1 maintains persistent (or keep-alive) connection by default to improve the network efficiency. You can use a request header "Connection: Close" to ask the server to close the TCP connection once the response is delivered.
+
+->POST method:
+	Each field has a name and can take on a specified value. Once the client fills in the fields and hits the submit button, the browser gathers each of the fields' name and value, packed them into "name=value" pairs, and concatenates all the fields together using "&" as the field separator. This is known as a query string. It will send the query string to the server as part of the request.
+
+	name1=value1&name2=value2&name3=value3&...
+
+	Special characters are not allowed inside the query string. They must be replaced by a "%" followed by the ASCII code in Hex. E.g., "~" is replaced by "%7E", "#" by "%23" and so on. Since blank is rather common, it can be replaced by either "%20" or "+" (the "+" character must be replaced by "%2B"). This replacement process is called URL-encoding, and the result is a URL-encoded query string. For example, suppose that there are 3 fields inside a form, with name/value of "name=Peter Lee", "address=#123 Happy Ave" and "language=C++", the URL-encoded query string is:
+
+	name=Peter+Lee&address=%23123+Happy+Ave&Language=C%2B%2B
+
+->When parsing requests consider a case where form data is sent to the server using GET method. http://127.0.0.1:8000/bin/login?user=Peter+Lee&pw=123456&action=login
+	GET /bin/login?user=Peter+Lee&pw=123456&action=login HTTP/1.1
+	Accept: image/gif, image/jpeg, */*
+	Referer: http://127.0.0.1:8000/login.html
+	Accept-Language: en-us
+	Accept-Encoding: gzip, deflate
+	User-Agent: Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)
+	Host: 127.0.0.1:8000
+	Connection: keep-alive
+
+
+*TODO*
+
+->If a GET request is made for a directory then it should access index.html by default. /umang/hello/ should mean /umang/hello/index.html
+
+->When parsing requests consider a case where form data is sent to the server using GET method. http://127.0.0.1:8000/bin/login?user=Peter+Lee&pw=123456&action=login
+	GET /bin/login?user=Peter+Lee&pw=123456&action=login HTTP/1.1
+	Accept: image/gif, image/jpeg, */*
+	Referer: http://127.0.0.1:8000/login.html
+	Accept-Language: en-us
+	Accept-Encoding: gzip, deflate
+	User-Agent: Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)
+	Host: 127.0.0.1:8000
+	Connection: Keep-Alive
+
+->Error Handling:
+	
+	200 OK: The request is fulfilled
+
+	
+	400 Bad Request: 
+		Server could not interpret or understand the request, probably syntax error in the request message.
+		In GET request, the HTTP-version was misspelled, resulting in bad syntax. The server returns an error "400 Bad Request". HTTP-version should be either HTTP/1.0 or HTTP/1.1.
+		In the following GET request, the request-URI did not begin from the root "/", resulted in a "bad request".
+		The following example shows that "Host" header is mandatory in an HTTP/1.1 request. If "Host" header is missing or if multiple host names are given the server returns an error "400 Bad Request".
+	
+	
+	401 Authentication Required: 
+		The requested resource is protected, and require client’s credential (username/password). The client should re-submit the request with his credential (username/password).
+
+	
+	403 Forbidden: 
+		Server refuses to supply the resource, regardless of identity of client.
+
+	
+	404 File not found:
+
+		import os.path
+		os.path.exists('mydirectory/myfile.txt') 
+		os.path.isfile('mydirectory/myfile.txt')
+		
+		There are other methods too
+		https://dbader.org/blog/python-check-if-file-exists
+
+	
+	405 Method Not Allowed: 
+		The request method used, e.g., POST, PUT, DELETE, is a valid method. However, the server does not allow that method for the resource requested.
+	
+
+	408 Request Timeout
+
+
+	501 Method Not Implemented:
+		The request method used is invalid (could be caused by a typing error, e.g., "GET" misspell as "Get").
+		In the request, "GET" is misspelled as "get". The server returns an error "501 Method Not Implemented". The response header "Allow" tells the client the methods allowed.
+
+		HTTP/1.1 501 Method Not Implemented
+		Date: Sun, 18 Oct 2009 10:32:05 GMT
+		Server: Apache/2.2.14 (Win32)
+		Allow: GET,HEAD,POST,OPTIONS,TRACE
+		Content-Length: 215
+		Connection: close
+		Content-Type: text/html; charset=iso-8859-1

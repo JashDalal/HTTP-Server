@@ -1,0 +1,49 @@
+->Refer RFC 2616.
+->Search tutorials for parts of RFC that are un-understandable. 
+->Minimum a server should be able to handle a GET request for getting non zero marks.
+->Try small things in python. String fucntions, file maniputlation, socket programming, sending files through socket.
+->When you do GET requests, you open the file, you read the file, you add headers to the file, then send it to socket.
+->You are allowed to use string, file libraries in python. 
+->You are also allowed to use http libraries :)
+
+ webserver {
+ 	open() a socket; 
+ 	bind() to port 80;
+ 	listen();
+ 	t = accept();
+ 	create thread for t;
+ 	thread {
+ 		s -> socket to exchange data for this connection. 
+ 		loop {
+ 			d = recvdata();
+ 			interpret the data in d; //headers are to be deciphered
+ 				//string processing, tokenising, making sense of data
+ 				loop {
+ 					l = next line();
+ 					t = ':' separated list of tokens from l
+ 					switch(t) {
+ 						"Host": do something;
+ 							carry some action on the sever side;
+ 							change some headers in the output(sent to browser);
+ 						
+ 						"User-agent": do something;
+ 						
+ 						"GET": 
+ 							f = get the next part of get //filename
+ 							open f;
+ 							write HTTP headers into the socket;
+ 							dump file f() into the socket;
+
+ 						"if-modified-since":
+ 							ht = get the time given in the header;
+ 							ct = current time;
+ 							ft = get when the file was modified
+ 							if(ft-ct <ht):
+ 								just send headers in socket;
+ 							else
+ 								send headers + file in socket;
+ 					}
+ 				}
+ 		}
+ 	}
+ }
