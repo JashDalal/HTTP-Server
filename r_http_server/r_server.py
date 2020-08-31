@@ -11,8 +11,9 @@ import shutil
 import pathlib
 import csv
 import filecmp
+import mimetypes
 
-filread = open("server.conf","r")
+filread = open("r_server.conf","r")
 r = (filread.read())
 data1 = r.split ("\n")
 dicti ={}
@@ -29,7 +30,7 @@ for item in dicti:
 	if 'ErrorLog' in item:
 		ErrorLog = dicti['ErrorLog']
 
-serverPort = 13000
+serverPort = 13002
 serverSocket = socket(AF_INET, SOCK_STREAM)
 serverSocket.bind(('', serverPort))
 MaxKeepAliveRequests = int(MaxKeepAliveRequests)
@@ -41,7 +42,7 @@ def chat(connectionSocket, addr):
 	print("New connection to client {}\n".format(addr))
 	while True:
 		text = connectionSocket.recv(1024).decode()
-		print('Text from client {}: {}'.format(addr[1], text))
+		print('Request from client {}: {}\n'.format(addr[1], text))
 		
 		#For splitting request
 		newlinesplit = text.split('\r\n')
@@ -188,23 +189,26 @@ def headers(filename, connectionSocket,status, version):
 	
 	#To get file size
 	content_length = "Content-Length: " + str(filesize)
-	server_name = 'Server: Myserver'
+	server_name = 'Server: JR/1.0.0 (Ubuntu)'
 	
 	#To check wheather connection is closed or not
 	
 	Connection = 'Connection: ' + serverStatus
 	
-	date = '\nDate: ' + time.strftime("%a, %d %b %Y %I:%M:%S %Z", time.gmtime()) 
+	date = 'Date: ' + time.strftime("%a, %d %b %Y %I:%M:%S %Z", time.gmtime()) 
 	#To get last modified date
 	mdate = time.ctime(os.path.getmtime(filename))
-	modified_date = "Last modified date: " + mdate 
+	modified_date = "Last-Modified: " + mdate 
 	
+	ranges = "Accept-Ranges: bytes"
 	
+	content_type = (mimetypes.MimeTypes().guess_type(filename)[0])
+	Content_type = "Content-Type: " + content_type
 
 	#For Response Message
-	response = '\n' + version + status + date + '\n' +  server_name  + '\n' + content_length + '\n' + modified_date + '\n' + Connection  + '\n'  + '\n'
-	print("You: " , response)
-	print(str(file_content))
+	response = '\n' + version + status + '\n' + server_name + '\n' +  date  + '\n' + modified_date + '\n' + ranges + '\n' + content_length + '\n' + Connection  + '\n' + Content_type + '\n' + '\n'
+	print("Server: " , response)
+	print(file_content)
 	connectionSocket.send(response.encode())
 	connectionSocket.sendfile(f)
 
@@ -224,6 +228,7 @@ def do_get(filename, connectionSocket,version, addr):
 		filename = '404.html'
 		status = ' 404 Not Found' 
 		date =  time.strftime("%a, %d %b %Y %I:%M:%S %Z", time.gmtime())
+		
 		#Function to write in log file
 		ErrorLogWrite(addr, status, date)
 		headers(filename, connectionSocket,status, version)
@@ -234,6 +239,9 @@ def do_urlget(filename, connectionSocket, version, addr):
 		var = filename.split("?")
 		var1 = []
 		filename = var[0]
+		if(filename[-1] == "/"):
+			filename = filename + "index.html"
+
 		for c in range(1, len(var)):
 			variables = var[c].split("&")
 			for k in range(len(variables)):
@@ -272,7 +280,7 @@ def do_head(filename, connectionSocket, version, addr):
 		
 		#To get file size
 		content_length = "Content-Length: " + str(filesize)
-		server_name = 'Server: Myserver'
+		server_name = 'Server: JR/1.0.0 (Ubuntu)'
 	
 		Connection = 'Connection: ' + serverStatus
 	
@@ -283,12 +291,12 @@ def do_head(filename, connectionSocket, version, addr):
 	
 		#To get last modified date
 		mdate = time.ctime(os.path.getmtime(filename))
-		modified_date = "Last modified date: " + mdate 
+		modified_date = "Last-Modified: " + mdate 
 		date = '\nDate: ' + time.strftime("%a, %d %b %Y %I:%M:%S %Z", time.gmtime())	
 
 		#For Response Message
-		response = '\n' + version + status  + date + '\n' +  server_name  + '\n' + content_length + '\n' + Type + '\n' + modified_date + '\n' + Connection + '\n'  + '\n'
-		print("You: ", response)
+		response = '\n' + version + status  + server_name + '\n' +  date  + '\n' + content_length + '\n' + Type + '\n' + modified_date + '\n' + Connection + '\n'  + '\n'
+		print("Server: ", response)
 		print("Done with file sending..\n")
 		connectionSocket.send(response.encode())
 	except IOError:
@@ -300,7 +308,7 @@ def do_head(filename, connectionSocket, version, addr):
 	
 		#To get file size
 		content_length = "Content-Length: " + str(filesize)
-		server_name = 'Myserver'
+		server_name = 'JR/1.0.0 (Ubuntu)'
 		date = time.strftime("%a, %d %b %Y %I:%M:%S %Z", time.gmtime())
 		Connection = 'Connection: ' + serverStatus
 
@@ -316,7 +324,7 @@ def do_head(filename, connectionSocket, version, addr):
 		#For Response Message
 		response = '\n' + version + status +  date + '\n' + server_name + '\n' + content_length + '\n' + Connection + '\n'  + '\n'
 
-		print("You: ", response)
+		print("Server: ", response)
 		connectionSocket.send(response.encode())
 
 
@@ -338,13 +346,13 @@ def do_conditional(filename, connectionSocket, var, version, addr):
 	
 		#To get file size
 		content_length = "Content-Length: " + str(filesize)
-		server_name = 'Server: Myserver'
+		server_name = 'Server: '
 	
 		
 		Connection = 'Connection: ' + serverStatus
 	
 		mdate = time.ctime(os.path.getmtime(filename))
-		modified_date = "Last modified date: " + mdate 	
+		modified_date = "Last-Modified: " + mdate 	
 
 		#For MIME type
 		m = magic.open(magic.MAGIC_MIME)
@@ -380,7 +388,7 @@ def do_conditional(filename, connectionSocket, var, version, addr):
 			else:
 				status = ' 304 Not Modified'
 				response = '\n' + version + status  + date + '\n' + server_name  + '\n' + content_length + '\n' + Connection + '\n'  + '\n'
-		print("You: ", response)
+		print("Server: ", response)
 		print(str(file_content))
 		print("\nDone with file sending..\n")
 		connectionSocket.send(response.encode())
@@ -395,12 +403,12 @@ def do_conditional(filename, connectionSocket, var, version, addr):
 	
 		#To get file size
 		content_length = "Content-Length: " + str(filesize)
-		server_name = 'Server: Myserver'
+		server_name = 'Server: JR/1.0.0 (Ubuntu)'
 		Connection = 'Connection: ' + serverStatus
 	
 		#To get last modified date
 		mdate = time.ctime(os.path.getmtime(filename))
-		modified_date = "Last modified date: " + mdate 	
+		modified_date = "Last-Modified: " + mdate 	
 
 		#For MIME type
 		m = magic.open(magic.MAGIC_MIME)
@@ -414,7 +422,7 @@ def do_conditional(filename, connectionSocket, var, version, addr):
 		date = '\nDate: ' + time.strftime("%a, %d %b %Y %I:%M:%S %Z", time.gmtime())
 		#For Response Message
 		response = '\n' + version + status + date + '\n' + server_name  + '\n' + content_length + '\n' + Connection + '\n'  + '\n'
-		print("You: ", response)
+		print("Server: ", response)
 		connectionSocket.send(response.encode())
 
 
@@ -439,7 +447,7 @@ def do_put(connectionSocket, filename, version, data, addr):
 			os.rename('temp', filename)
 			status = ' 200 OK'
 
-	server_name = 'Server: Myserver'
+	server_name = 'Server: JR/1.0.0 (Ubuntu)'
 	Connection = 'Connection: ' + serverStatus
 	
 	#For MIME type
@@ -452,7 +460,7 @@ def do_put(connectionSocket, filename, version, data, addr):
 	
 	#For Response Message
 	response = '\n' + version + status + date + '\n'  + server_name  + '\n' + Type + '\n' + Connection + '\n'  + '\n'
-	print("You: ", response)
+	print("Server: ", response)
 	print("\n Done with file uploading...")
 	connectionSocket.send(response.encode())
 	
@@ -503,7 +511,7 @@ def do_options(connectionSocket, filename, version):
 	
 	status =  ' 200 OK'
 	content_length = "Content-Length: 0"
-	server_name = 'Server: Myserver'
+	server_name = 'Server: JR/1.0.0 (Ubuntu)'
 	Connection = 'Connection: ' + serverStatus
 	m = magic.open(magic.MAGIC_MIME)
 	m.load()
@@ -514,7 +522,7 @@ def do_options(connectionSocket, filename, version):
 		allow_requests = 'Allow: GET, POST, HEAD, OPTIONS'
 
 	response = '\n' + version + status + date + '\n' + server_name  + '\n' + allow_requests + '\n' + content_length + '\n' + '\n' + Connection + '\n'  + '\n'
-	print("You: ", response)
+	print("Server: ", response)
 	connectionSocket.send(response.encode())
 	
 		
@@ -532,7 +540,7 @@ def do_delete(connectionSocket, filename, version, addr):
 	
 		#To get file size
 		content_length = "Content-Length: " + str(filesize)
-		server_name = 'Server: Myserver'
+		server_name = 'Server: JR/1.0.0 (Ubuntu)'
 	
 		#To check wheather connection is closed or not
 	
@@ -547,7 +555,7 @@ def do_delete(connectionSocket, filename, version, addr):
 		#For Response Message
 		response  = '\n' + version + status  + date + '\n' +  server_name  + '\n' + Type + '\n' + content_length + '\n' + Connection + '\n' + file_content +  '\n' + '\n'
 		os.remove(filename)
-		print("You: ", response)
+		print("Server: ", response)
 		print("\nFile is deleted  successfully")
 		connectionSocket.send(response.encode())
 	except IOError:
@@ -559,7 +567,7 @@ def do_delete(connectionSocket, filename, version, addr):
 	
 		#To get file size
 		content_length = "Content-Length: " + str(filesize)
-		server_name = 'Server: Myserver'
+		server_name = 'Server: JR/1.0.0 (Ubuntu)'
 	
 		#To check wheather connection is closed or not
 		
@@ -578,7 +586,7 @@ def do_delete(connectionSocket, filename, version, addr):
 		#Function to write in log file
 		ErrorLogWrite(addr, status, date)
 		
-		print("You: ", response)
+		print("Server: ", response)
 		connectionSocket.send(response.encode())
 
 def month_converter(month):

@@ -7,7 +7,7 @@ import time
 import os
 import mimetypes 
 import csv
-import urllib.parse
+import urllib
 import filecmp
 import shutil
 import os
