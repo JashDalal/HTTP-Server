@@ -1,4 +1,4 @@
-"""Code to except multiple requests"""
+
 from time import  gmtime, strftime
 import time
 from socket import *
@@ -12,6 +12,7 @@ import pathlib
 import csv
 import filecmp
 import mimetypes
+import urllib
 
 filread = open("r_server.conf","r")
 r = (filread.read())
@@ -30,7 +31,7 @@ for item in dicti:
 	if 'ErrorLog' in item:
 		ErrorLog = dicti['ErrorLog']
 
-serverPort = 13002
+serverPort = 13000
 serverSocket = socket(AF_INET, SOCK_STREAM)
 serverSocket.bind(('', serverPort))
 MaxKeepAliveRequests = int(MaxKeepAliveRequests)
@@ -42,7 +43,7 @@ def chat(connectionSocket, addr):
 	print("New connection to client {}\n".format(addr))
 	while True:
 		text = connectionSocket.recv(1024).decode()
-		print('Request from client {}: {}\n'.format(addr[1], text))
+		print('Request from Client {}:\n {}'.format(addr[1], text))
 		
 		#For splitting request
 		newlinesplit = text.split('\r\n')
@@ -50,11 +51,6 @@ def chat(connectionSocket, addr):
 		check = []
 		var = []
 		firstlinesplit = newlinesplit[0].split()
-		if firstlinesplit[0] == 'exit()' or firstlinesplit[0] == 'quit()':
-			serverStatus = 'Closed'
-			message  = 'BYE'
-			connectionSocket.send(message.encode())
-			break
 		
 		#Splitting for last line
 		if(len(newlinesplit) >= 3 and (firstlinesplit[0] != 'PUT' or firstlinesplit[0] != 'POST')):
@@ -101,7 +97,7 @@ def chat(connectionSocket, addr):
 				
 				if(firstlinesplit[2]):
 					version = firstlinesplit[2]
-					if (version != 'HTTP/1.1' or (version == 'HTTP/1.1' and check[0][0] != 'Host')) :
+					if (version != 'HTTP/1.1') :
 						status =  ' 400 Bad Request'
 						filename = '400.html'
 						version = 'HTTP/1.1'
@@ -208,7 +204,10 @@ def headers(filename, connectionSocket,status, version):
 	#For Response Message
 	response = '\n' + version + status + '\n' + server_name + '\n' +  date  + '\n' + modified_date + '\n' + ranges + '\n' + content_length + '\n' + Connection  + '\n' + Content_type + '\n' + '\n'
 	print("Server: " , response)
-	print(file_content)
+	try:
+		print(file_content.decode('ascii'))	#Decoding done to convert byte to string to print on the screen
+	except:
+		print(file_content)
 	connectionSocket.send(response.encode())
 	connectionSocket.sendfile(f)
 
@@ -235,18 +234,23 @@ def do_get(filename, connectionSocket,version, addr):
 		
 
 def do_urlget(filename, connectionSocket, version, addr):
-	try:
+	
+	try:	
+	
 		var = filename.split("?")
 		var1 = []
 		filename = var[0]
 		if(filename[-1] == "/"):
 			filename = filename + "index.html"
 
+		csv_filename = ServerRoot[1:] + '/getdata.csv'
+			
 		for c in range(1, len(var)):
 			variables = var[c].split("&")
 			for k in range(len(variables)):
-				var1.append(variables[k].split("="))
-		with open('getdata.csv', 'w') as csvFile:
+				var1.append(list(map(lambda x:urllib.parse.unquote_plus(x), variables[k].split("="))))
+				
+		with open(csv_filename, 'w') as csvFile:
 			writer = csv.writer(csvFile)
 			writer.writerows(var1)
 		csvFile.close()
@@ -265,7 +269,6 @@ def do_urlget(filename, connectionSocket, version, addr):
 		#Function to write in log file
 		ErrorLogWrite(addr, status, date)
 		headers(filename, connectionSocket,status, version)
-		
 			
 #Function to handle HEAD request
 def do_head(filename, connectionSocket, version, addr):
@@ -389,7 +392,7 @@ def do_conditional(filename, connectionSocket, var, version, addr):
 				status = ' 304 Not Modified'
 				response = '\n' + version + status  + date + '\n' + server_name  + '\n' + content_length + '\n' + Connection + '\n'  + '\n'
 		print("Server: ", response)
-		print(str(file_content))
+		print(file_content)
 		print("\nDone with file sending..\n")
 		connectionSocket.send(response.encode())
 		
