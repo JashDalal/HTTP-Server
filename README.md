@@ -11,11 +11,11 @@ An HTTP Server has to be made which can process
 7. OPTIONS
 
 Basic format of a GET/POST request is:
-	<>
+	<p>
 	POST <relative path> HTTP/1.1
 	Host: <hostname>
 	name1=value1&name2=value2
-	<>
+	</p>
 For eg:
 	POST /test/demo_form.php HTTP/1.1
 	Host: w3schools.com
